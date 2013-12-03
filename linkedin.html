@@ -1,0 +1,54 @@
+<head>
+  <title>LinkedIn Crawler</title>
+</head>
+
+<body>
+    <h1>LinkedIn Crawler</h1>
+    {{>search}}
+    {{>status}}
+
+    {{>users}}
+</body>
+
+<template name="search">
+    <h2>Search</h2>
+    <form class="search">
+
+        <div class="form-group">
+            <label for="email">Email address</label>
+            <input type="email" class="form-control" id="email" placeholder="Enter email">
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" class="form-control" id="password" placeholder="Password">
+        </div>
+
+        <div class="form-group">
+            <label for="text">Search query</label>
+            <input type="text" class="form-control" id="text" placeholder="Enter search query">
+        </div>
+        <button type="submit" class="btn btn-default" disabled>Crawl</button>
+    </form>
+</template>
+
+<template name="status">
+    <div id="status">
+        <span></span>
+    </div>
+</template>
+
+<template name="users">
+    <h2>Crawled profiles ({{count}})</h2>
+    <div id="users">
+    {{#each users}}
+        <a href="http://www.linkedin.com/profile/view?id={{id}}" target="_blank">
+            <img src="{{picture}}">
+            {{name}}
+            {{#if locality}}
+                ({{locality}})
+            {{/if}}
+        </a>
+    {{/each}}
+    </div>
+</template>
+
