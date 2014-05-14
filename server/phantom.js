@@ -10,7 +10,8 @@ var settings = {
 //-------------------------------------------------------------------------------------//
 // LIBRARIES AND VARIABLES
 //-------------------------------------------------------------------------------------//
-var wd = Npm.require('wd');
+//var wd = Npm.require('wd');
+var wd = Meteor.require('wd');
 var Fiber = Npm.require('fibers');
 var Asserter = wd.Asserter;
 var browser = wd.remote('localhost', 9134);
