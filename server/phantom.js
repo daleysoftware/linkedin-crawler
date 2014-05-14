@@ -1,11 +1,11 @@
 //-------------------------------------------------------------------------------------//
 // CONFIGURATION
 //-------------------------------------------------------------------------------------//
+
 var settings = {
     browserName: 'chrome',
     "phantomjs.page.settings.userAgent": 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.26 Safari/537.36'
 };
-
 
 //-------------------------------------------------------------------------------------//
 // LIBRARIES AND VARIABLES
@@ -19,7 +19,6 @@ var fs = Npm.require('fs');
 var crawling = false;
 var items = [];
 var status = "";
-
 
 //-------------------------------------------------------------------------------------//
 // HELPERS
@@ -153,57 +152,12 @@ function async_getUserResult(callback) {
     var result = {},
         $card = $("#top-card");
 
-    /**
-     * Get all public connections from a user recursively (use the js pagination)
-     * @param callback {Function}
-     * @param _ids {Array}
-     */
-    /*
-    function getConnections(callback, _ids) {
-        var timer,
-            $connections = $("#connections");
-
-        _ids = _ids || [];
-
-        if ($connections.length) {
-            timer = setInterval(function () {
-                var $ul = $(".cardstack-container ul", $connections),
-                    $button = $connections.find("button.next");
-
-                if (!$ul.hasClass("crawled")) {
-                    $ul.addClass("crawled");
-                    $ul.find("li").each(function () {
-                        var id = $(this).attr("id").replace("connection-", "");
-                        _ids.push(id);
-                    });
-                    if ($button.length && !$button.hasClass("hide")) {
-                        $button.click()
-                    } else {
-                        clearInterval(timer);
-                        callback(_ids);
-                    }
-                }
-            }, 200);
-
-        } else {
-            callback(_ids)
-        }
-    }
-    */
-
     if ($card.length) {
-        result.picture = $(".profile-picture img", $card).attr("src");
         result.name = $("span.full-name", $card).text();
         result.headline = $("#headline", $card).text();
         result.locality = $("#location .locality", $card).text();
         result.industry = $("#location .industry", $card).text();
         callback(result);
-        /*
-        getConnections(function (ids) {
-            result.connections = ids;
-            callback(result);
-        });
-        */
     } else {
         callback(false);
     }
@@ -281,7 +235,6 @@ function getAllSearchResults(callback, _result) {
     });
 }
 
-
 /**
  * Crawl the users
  * @param ids {Array}
@@ -306,8 +259,6 @@ function crawl(ids, callback) {
     }).run();
 }
 
-//top-card
-
 /**
  * Get User data from LinkedIN
  * @param id {string}
@@ -327,8 +278,6 @@ function getUser(id, callback) {
         });
     });
 }
-
-
 
 //-------------------------------------------------------------------------------------//
 // PUBLISH METHODS TO THE CLIENT

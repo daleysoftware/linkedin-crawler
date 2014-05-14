@@ -3,17 +3,15 @@
 </head>
 
 <body>
-    <h1>LinkedIn Crawler</h1>
+    <h2>LinkedIn Crawler</h2>
     {{>search}}
     {{>status}}
-
     {{>users}}
 </body>
 
 <template name="search">
-    <h2>Search</h2>
+    <h3>Search</h3>
     <form class="search">
-
         <div class="form-group">
             <label for="email">Email address</label>
             <input type="email" class="form-control" id="email" placeholder="Enter email">
@@ -40,15 +38,14 @@
 <template name="users">
     <h2>Crawled profiles ({{count}})</h2>
     <div id="users">
-    {{#each users}}
-        <a href="http://www.linkedin.com/profile/view?id={{id}}" target="_blank">
-            <img src="{{picture}}">
-            {{name}}
-            {{#if locality}}
-                ({{locality}})
-            {{/if}}
-        </a>
-    {{/each}}
+    <ul>
+        {{#each users}}
+            <li><a href="http://www.linkedin.com/profile/view?id={{id}}" target="_blank">{{name}}</a>
+                {{#if locality}}
+                    ({{locality}})
+                {{/if}}
+            </li>
+        {{/each}}
+    </ul>
     </div>
 </template>
-
