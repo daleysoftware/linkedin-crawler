@@ -14,3 +14,8 @@ To start using this application, you will need to install the following:
 * `metero-npm`
 
 After installation of these packages, you can execute `make -j 2` to run the application and `make clean` to delete all database files for fresh runs.
+
+Interface
+---
+
+<img align="center" src="https://raw.githubusercontent.com/mpillar/linkedin-crawler/master/img/example.png"/>
