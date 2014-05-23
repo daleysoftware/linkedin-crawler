@@ -10,8 +10,7 @@ var settings = {
 //-------------------------------------------------------------------------------------//
 // LIBRARIES AND VARIABLES
 //-------------------------------------------------------------------------------------//
-//
-//var wd = Npm.require('wd');
+
 var wd = Meteor.require('wd');
 var Fiber = Npm.require('fibers');
 var Asserter = wd.Asserter;
@@ -200,17 +199,14 @@ function search(err) {
 
     notice("Searching...");
 
-    input("#main-search-box", items.join(" "), function () {
-        submit("#global-search", function () {
-            waitFor("#results.search-results", function () {
-                getAllSearchResults(function (ids) {
-                    crawl(ids, function () {
-                        notice("Crawl ends.")
-                    });
+    browser.get("http://linkedin.com/vsearch/p?keywords=" + items.join("+"), function() {
+        waitFor("#results.search-results", function () {
+            getAllSearchResults(function (ids) {
+                crawl(ids, function () {
+                    notice("Crawl ends.")
                 });
             });
         });
-
     });
 }
 
@@ -219,7 +215,6 @@ function search(err) {
  * @param callback {Function}
  * @param _result {Array} optional, only used in recursive call
  */
-
 function getAllSearchResults(callback, _result) {
     _result = _result || [];
     notice("Collecting search result ...");
@@ -264,7 +259,7 @@ function crawl(ids, callback) {
 }
 
 /**
- * Get User data from LinkedIN
+ * Get User data from LinkedIn
  * @param id {string}
  * @param callback {Function}
  */
