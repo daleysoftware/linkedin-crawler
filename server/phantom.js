@@ -201,8 +201,11 @@ function search(err) {
         waitFor("#results.search-results", function () {
             getAllSearchResults(function (ids) {
                 crawl(ids, function () {
-                    notice("Crawl ends.");
-                    crawling = false;
+                    if (crawling) {
+                        notice("Crawl ends.");
+                    } else {
+                        notice("");
+                    }
                 });
             });
         });
@@ -216,6 +219,12 @@ function search(err) {
  */
 function getAllSearchResults(callback, _result) {
     _result = _result || [];
+
+    if (!crawling) {
+        notice("");
+        return;
+    }
+
     browser.execute(getSearchResults, function (err, result) {
         if (result && result.ids && result.ids.length) {
             _result.push.apply(_result, result.ids);
