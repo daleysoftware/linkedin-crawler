@@ -153,9 +153,7 @@ function async_getUserResult(callback) {
 
     if ($card.length) {
         result.name = $("span.full-name", $card).text();
-        result.headline = $("#headline", $card).text();
         result.locality = $("#location .locality", $card).text();
-        result.industry = $("#location .industry", $card).text();
         callback(result);
     } else {
         callback(false);
@@ -203,7 +201,8 @@ function search(err) {
         waitFor("#results.search-results", function () {
             getAllSearchResults(function (ids) {
                 crawl(ids, function () {
-                    notice("Crawl ends.")
+                    notice("Crawl ends.");
+                    crawling = false;
                 });
             });
         });
@@ -211,24 +210,23 @@ function search(err) {
 }
 
 /**
- * Collect all search matching UserId from all pages available
+ * Perform seach and save all results in the database.
  * @param callback {Function}
  * @param _result {Array} optional, only used in recursive call
  */
 function getAllSearchResults(callback, _result) {
     _result = _result || [];
-    notice("Collecting search result ...");
     browser.execute(getSearchResults, function (err, result) {
         if (result && result.ids && result.ids.length) {
             _result.push.apply(_result, result.ids);
         }
         if (result && result.next) {
-            notice("Getting next results:" + result.next);
+            notice("Getting search results for page " + result.next.split("page_num=")[1] + "...");
             browser.get("http://www.linkedin.com" + result.next, function() {
                 getAllSearchResults(callback, _result);
             });
         } else {
-            notice("Search ends with " + _result.length + " result(s)");
+            notice("Search ends with " + _result.length + " result(s).");
             callback(_result);
         }
     });
@@ -241,20 +239,30 @@ function getAllSearchResults(callback, _result) {
  */
 function crawl(ids, callback) {
     Fiber(function () {
-        var id, test;
+        var id;
+        var found = false;
 
-        // look for next id unknown
-        while (crawling && (id = ids.shift()) && users.find({id: id}).count()) {
-            test = id;
+        // Look for next id unknown.
+        while (crawling && (id = ids.shift())) {
+            if (!users.find({id: id}).count()) {
+                console.log("New user. ID:" + id);
+                found = true;
+                break;
+            }
+
+            console.log("User already found. ID:" + id);
         }
 
-        if (crawling && id && test !== id) { // id defined and not in db
-            getUser(id, function () {
-                crawl(ids, callback);
-            })
-        } else {
+        // If we've stopped crawling or we've finished with the list.
+        if (!crawling || !found) {
             callback();
+            return;
         }
+
+        // Crawl this user.
+        getUser(id, function () {
+            crawl(ids, callback);
+        });
     }).run();
 }
 
@@ -268,10 +276,13 @@ function getUser(id, callback) {
         browser.executeAsync(async_getUserResult, function (err, result) {
             Fiber(function () {
                 if (!err && result) {
-                    notice("Saving " + result.name);
+                    notice("Saving " + result.name + "...");
                     result.id = id;
                     users.insert(result);
+                } else {
+                    console.log("Failed to view profile. ID:" + id);
                 }
+
                 callback();
             }).run();
         });
