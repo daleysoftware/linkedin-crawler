@@ -1,4 +1,3 @@
-
 var prevStatus = "";
 
 setInterval(function () {

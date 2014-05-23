@@ -10,6 +10,7 @@ var settings = {
 //-------------------------------------------------------------------------------------//
 // LIBRARIES AND VARIABLES
 //-------------------------------------------------------------------------------------//
+//
 //var wd = Npm.require('wd');
 var wd = Meteor.require('wd');
 var Fiber = Npm.require('fibers');
@@ -89,7 +90,7 @@ function submit(selector, callback) {
  */
 function waitFor(selector, callback) {
     browser.waitForElementByCssSelector(selector, asserter, 10000, 200, function (err, satis, el) {
-        callback(!err);
+        callback(err);
     });
 }
 
@@ -122,7 +123,6 @@ function notice(msg) {
     status = msg;
     console.log(msg);
 }
-
 
 //-------------------------------------------------------------------------------------//
 // FUNCTIONS INJECTED IN PHANTOM.JS WEBPAGE
@@ -174,7 +174,7 @@ function async_getUserResult(callback) {
  * @param callback {Function}
  */
 function connect(email, password, callback) {
-    notice("connecting...");
+    notice("Connecting...");
 
     browser.init(settings, function() {
         newSession(function () {
@@ -192,8 +192,13 @@ function connect(email, password, callback) {
 /**
  * Submit a new search
  */
-function search() {
-    notice("searching...");
+function search(err) {
+    if (err) {
+        notice("Login failed. Search cancelled.");
+        return;
+    }
+
+    notice("Searching...");
 
     input("#main-search-box", items.join(" "), function () {
         submit("#global-search", function () {
@@ -209,7 +214,6 @@ function search() {
     });
 }
 
-
 /**
  * Collect all search matching UserId from all pages available
  * @param callback {Function}
@@ -218,18 +222,18 @@ function search() {
 
 function getAllSearchResults(callback, _result) {
     _result = _result || [];
-    notice("collecting search result ...");
+    notice("Collecting search result ...");
     browser.execute(getSearchResults, function (err, result) {
         if (result && result.ids && result.ids.length) {
             _result.push.apply(_result, result.ids);
         }
         if (result && result.next) {
-            notice("getting next results:" + result.next);
+            notice("Getting next results:" + result.next);
             browser.get("http://www.linkedin.com" + result.next, function() {
                 getAllSearchResults(callback, _result);
             });
         } else {
-            notice("search ends with " + _result.length + " result(s)");
+            notice("Search ends with " + _result.length + " result(s)");
             callback(_result);
         }
     });
