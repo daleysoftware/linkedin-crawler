@@ -165,12 +165,12 @@ function async_getUserResult(callback) {
 //-------------------------------------------------------------------------------------//
 
 /**
- * Signin to LinkedIn
+ * Signin to LinkedIn and perform crawl.
  * @param email {String}
  * @param password {String}
  * @param callback {Function}
  */
-function connect(email, password, callback) {
+function go(email, password, callback) {
     notice("Connecting...");
 
     browser.init(settings, function() {
@@ -178,7 +178,9 @@ function connect(email, password, callback) {
             input("#session_key-login", email, function () {
                 input("#session_password-login", password, function () {
                     submit("#login", function () {
-                        waitFor(".nav-item.account-settings-tab", callback);
+                        waitFor(".nav-item.account-settings-tab", function(err) {
+                            search(err, callback);
+                        });
                     });
                 });
             });
@@ -189,9 +191,10 @@ function connect(email, password, callback) {
 /**
  * Submit a new search
  */
-function search(err) {
+function search(err, callback) {
     if (err) {
         notice("Login failed. Search cancelled.");
+        callback();
         return;
     }
 
@@ -201,11 +204,8 @@ function search(err) {
         waitFor("#results.search-results", function () {
             getAllSearchResults(function (ids) {
                 crawl(ids, function () {
-                    if (crawling) {
-                        notice("Crawl ends.");
-                    } else {
-                        notice("");
-                    }
+                    notice("Crawl completed.");
+                    callback();
                 });
             });
         });
@@ -221,7 +221,7 @@ function getAllSearchResults(callback, _result) {
     _result = _result || [];
 
     if (!crawling) {
-        notice("");
+        notice("Aborted.");
         return;
     }
 
@@ -263,7 +263,11 @@ function crawl(ids, callback) {
         }
 
         // If we've stopped crawling or we've finished with the list.
-        if (!crawling || !found) {
+        if (!crawling) {
+            notice("Aborted.");
+            return;
+        }
+        if (!found) {
             callback();
             return;
         }
@@ -308,10 +312,15 @@ Meteor.methods({
         crawling = value;
         items = (text || "").replace(/\s+/g, " ").split(" ");
         if (crawling) {
-            connect(email, password, search);
+            go(email, password, function() {
+                crawling = false;
+            });
         }
     },
     status: function () {
         return status;
+    },
+    crawling: function() {
+        return crawling;
     }
 });
