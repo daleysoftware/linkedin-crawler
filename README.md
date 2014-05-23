@@ -19,3 +19,9 @@ Interface
 ---
 
 <img align="center" src="https://raw.githubusercontent.com/mpillar/linkedin-crawler/master/img/example.png"/>
+
+Future Work
+---
+
+* Allow for multiple viewers and searchers.
+* Allow for a queue of search terms.
