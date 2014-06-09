@@ -13,7 +13,7 @@ To start using this application, you will need to install the following:
 * `npm`
 * `meteor-npm`
 
-After installation of these packages, you can execute `make -j 2` to run the application and `make clean` to delete all database files for fresh runs. On Mac, you may need to run `make setup` before you can run the application to install npm dependencies.
+After installation of these packages, you can execute `make -j 2` to run the application and `make clean` to delete all database files for fresh runs.
 
 Interface
 ---
