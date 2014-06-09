@@ -51,12 +51,12 @@ function newSession(callback) {
 /**
  * Fill in an input
  * @param selector {String}
- * @param text {String}
+ * @param terms {String}
  * @param callback {Function}
  */
-function input(selector, text, callback) {
+function input(selector, terms, callback) {
     browser.elementByCssSelector(selector, function (err, el) {
-        browser.type(el, text, callback);
+        browser.type(el, terms, callback);
     });
 }
 
@@ -189,7 +189,7 @@ function go(email, password, callback) {
 }
 
 /**
- * Submit a new search
+ * Submit a new search.
  */
 function search(err, callback) {
     if (err) {
@@ -198,14 +198,26 @@ function search(err, callback) {
         return;
     }
 
-    notice("Searching...");
+    searchForTerms(0);
+}
 
-    browser.get("http://linkedin.com/vsearch/p?keywords=" + items.join("+"), function() {
+/**
+ * Submit a search for a specific set of terms, given the index to our global items term list.
+ */
+function searchForTerms(index) {
+    if (index >= items.length) {
+        notice("Crawl completed.");
+        return;
+    }
+
+    item = items[index];
+    notice("Searching for \"" + item.join(" ") + "\"...");
+
+    browser.get("http://linkedin.com/vsearch/p?keywords=" + item.join("+"), function() {
         waitFor("#results.search-results", function () {
             getAllSearchResults(function (ids) {
                 crawl(ids, function () {
-                    notice("Crawl completed.");
-                    callback();
+                    searchForTerms(index+1);
                 });
             });
         });
@@ -307,10 +319,21 @@ function getUser(id, callback) {
 //-------------------------------------------------------------------------------------//
 
 Meteor.methods({
-    crawl: function (value, email, password, text) {
+    crawl: function (value, email, password, terms, locations) {
         this.unblock();
         crawling = value;
-        items = (text || "").replace(/\s+/g, " ").split(" ");
+
+        terms = (terms || "").replace(/\s+/g, " ").split(" ");
+        items = [];
+
+        locations = locations.split(',');
+        locations.forEach(function(loc) {
+            loc = loc.replace(/\s+/g, " ").split(" ");
+            items.push(terms.concat(loc).filter(function(n) {return n != undefined && n.length > 0}));
+        });
+
+        console.log(items);
+
         if (crawling) {
             go(email, password, function() {
                 crawling = false;
