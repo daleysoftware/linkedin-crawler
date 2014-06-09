@@ -1,6 +1,6 @@
 .PHONY: run setup phantomjs meteor
 
-run: setup phantomjs meteor
+run: phantomjs meteor
 
 setup:
 	meteor-npm
