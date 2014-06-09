@@ -318,18 +318,29 @@ function getUser(id, callback) {
 // PUBLISH METHODS TO THE CLIENT
 //-------------------------------------------------------------------------------------//
 
+function removeNullOrEmptyEntries(arr) {
+    return arr.filter(function(n) {
+        return n != undefined && n.length > 0
+    });
+}
+
 Meteor.methods({
     crawl: function (value, email, password, terms, locations) {
         this.unblock();
         crawling = value;
 
-        terms = (terms || "").replace(/\s+/g, " ").split(" ");
         items = [];
 
+        terms = (terms || "").split(',');
         locations = locations.split(',');
-        locations.forEach(function(loc) {
-            loc = loc.replace(/\s+/g, " ").split(" ");
-            items.push(terms.concat(loc).filter(function(n) {return n != undefined && n.length > 0}));
+
+        terms.forEach(function(term) {
+            term = term.split(" ");
+
+            locations.forEach(function(loc) {
+                loc = loc.split(" ");
+                items.push(removeNullOrEmptyEntries(term.concat(loc)));
+            });
         });
 
         console.log(items);

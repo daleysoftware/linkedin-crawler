@@ -24,4 +24,4 @@ Future Work
 ---
 
 * Allow for multiple viewers and searchers.
-* Allow for a queue of search terms.
+* Misc improvements to the usability of the web interface.
