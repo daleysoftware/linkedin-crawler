@@ -303,6 +303,7 @@ function getUser(id, callback) {
                 if (!err && result) {
                     notice("Saving " + result.name + "...");
                     result.id = id;
+                    result.date = (new Date).getTime();
                     users.insert(result);
                 } else {
                     console.log("Failed to view profile. ID:" + id);
