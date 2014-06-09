@@ -1,5 +1,5 @@
 <head>
-  <title>LinkedIn Crawler</title>
+    <title>LinkedIn Crawler</title>
 </head>
 
 <body>
@@ -42,7 +42,12 @@
 
 <template name="users">
     <h2>Crawled Profiles</h2>
-    <p>Total crawled: {{count}}. Recently crawled profiles can be found below.</p>
+    <p>
+        Total crawled: {{count}}.
+        <a href="data:application/csv;charset=UTF-8,{{csv}}"
+            download="linkedin.csv">Download full CSV</a>.
+    </p>
+
     <div id="users">
     <ul>
         {{#each users}}
