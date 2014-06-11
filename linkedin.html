@@ -4,24 +4,98 @@
 
 <body>
     <h2>LinkedIn Crawler</h2>
+    <p><b>Purpose</b>: generate sales opportunities by drawing attention to your organization via LinkedIn profile views.</p>
+
+    <p>The searcher's network will be used to generate leads based on the provided search criteria. The viewers, in addition to the searcher, will "view" the LinkedIn profiles of the leads as the crawl is executed. This will generate notifications on the lead's LinkedIn page.</p>
+    <p>Lead profiles will only be viewed one time by the viewer &amp; searcher set; once in the database, if discovered again in a different search, the lead will be ignored.</p>
+    <hr/>
+
     {{>search}}
     <hr/>
+    <h2>Status</h2>
     {{>status}}
     <hr/>
     {{>users}}
 </body>
 
 <template name="search">
-    <h3>Search</h3>
+    <h3>Credentials</h3>
+
     <form class="search">
-        <div class="form-group">
-            <label for="email">Email Address</label>
-            <input type="email" class="form-control" id="email" placeholder="Enter email address">
+        <table width="100%">
+            <tr>
+                <td width="20%"><h4>Searcher</h4></td>
+                <td width="80%"><h4>Viewers</h4></td>
+            </tr>
+        </table>
+
+        <div id="content">
+            <!-- Searcher -->
+            <div style="width: 18%; float:left">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" class="form-control" id="email" placeholder="Email address">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password" placeholder="Password">
+                </div>
+            </div>
+            <div style="width: 80%; float:right">
+                <!-- Viewer 1 -->
+                <div style="width: 25%; float:left">
+                    <div class="form-group">
+                        <label for="email-viewer-1">Email Address</label>
+                        <input disabled type="email" class="form-control" id="email-viewer-1" placeholder="Email address">
+                    </div>
+                    <div class="form-group">
+                        <label for="password-viewer-1">Password</label>
+                        <input disabled type="password" class="form-control" id="password-viewer-1" placeholder="Password">
+                    </div>
+                </div>
+                <!-- Viewer 2 -->
+                <div style="width: 25%; float:left">
+                    <div class="form-group">
+                        <label for="email-viewer-2">Email Address</label>
+                        <input disabled type="email" class="form-control" id="email-viewer-2" placeholder="Email address">
+                    </div>
+                    <div class="form-group">
+                        <label for="password-viewer-2">Password</label>
+                        <input disabled type="password" class="form-control" id="password-viewer-2" placeholder="Password">
+                    </div>
+                </div>
+                <!-- Viewer 3 -->
+                <div style="width: 25%; float:left">
+                    <div class="form-group">
+                        <label for="email-viewer-3">Email Address</label>
+                        <input disabled type="email" class="form-control" id="email-viewer-3" placeholder="Email address">
+                    </div>
+                    <div class="form-group">
+                        <label for="password-viewer-3">Password</label>
+                        <input disabled type="password" class="form-control" id="password-viewer-3" placeholder="Password">
+                    </div>
+                </div>
+                <!-- Viewer 4 -->
+                <div style="width: 25%; float:left">
+                    <div class="form-group">
+                        <label for="email-viewer-4">Email Address</label>
+                        <input disabled type="email" class="form-control" id="email-viewer-4" placeholder="Email address">
+                    </div>
+                    <div class="form-group">
+                        <label for="password-viewer-4">Password</label>
+                        <input disabled type="password" class="form-control" id="password-viewer-4" placeholder="Password">
+                    </div>
+                </div>
+                <br style="clear:both;"/>
+            </div>
+
+            <br style="clear:both;"/>
         </div>
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" class="form-control" id="password" placeholder="Password">
-        </div>
+        <hr/>
+
+        <h3>Criteria</h3>
+        <p>To define multiple search terms or locations, provide comma-separated input, e.g. "Palo Alto, San Francisco".</p>
+
         <div class="form-group">
             <label for="text">Search Terms</label>
             <input type="text" class="form-control" id="terms" placeholder="Enter search terms">
@@ -36,17 +110,14 @@
 
 <template name="status">
     <div id="status">
-        <span></span>
+        <span>N/A</span>
     </div>
 </template>
 
 <template name="users">
     <h2>Crawled Profiles</h2>
-    <p>
-        Total crawled: {{count}}.
-        <a href="data:application/csv;charset=UTF-8,{{csv}}"
-            download="linkedin.csv">Download full CSV</a>.
-    </p>
+    <p>Total crawled: {{count}}</p>
+    <p><a href="data:application/csv;charset=UTF-8,{{csv}}" download="linkedin.csv">Download full CSV</a></p>
 
     <div id="users">
     <ul>

@@ -23,5 +23,6 @@ Interface
 Future Work
 ---
 
-* Allow for multiple viewers and searchers.
-* Misc improvements to the usability of the web interface.
+* Allow for more flexibile specification of the number of viewers.
+* Allow for multiple searchers.
+* Misc improvements to the usability of the web interface (specifically the "status" area needs work).

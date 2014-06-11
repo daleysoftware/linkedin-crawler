@@ -61,17 +61,6 @@ function input(selector, terms, callback) {
 }
 
 /**
- * Click on an item
- * @param selector {String}
- * @param callback {Function}
- */
-function click(selector, callback) {
-    browser.elementByCssSelector(selector, function (err, el) {
-        el.click(callback);
-    });
-}
-
-/**
  * Submit a form
  * @param selector {String}
  * @param callback {Function}
@@ -90,27 +79,6 @@ function submit(selector, callback) {
 function waitFor(selector, callback) {
     browser.waitForElementByCssSelector(selector, asserter, 10000, 200, function (err, satis, el) {
         callback(err);
-    });
-}
-
-/**
- * Create a screenshot
- * @param path {String}
- */
-function screen(path) {
-    browser.takeScreenshot(function (err, data) {
-        fs.writeFileSync(path, data, 'base64');
-    });
-}
-
-/**
- * Get the source code
- * @param selector {String} (default = body)
- * @param callback {Function}
- */
-function source(selector, callback) {
-    browser.execute(function () {return $(selector || 'body').html(); }, function (err, result) {
-        callback(err ? false : result);
     });
 }
 
@@ -285,18 +253,18 @@ function crawl(ids, callback) {
         }
 
         // Crawl this user.
-        getUser(id, function () {
+        crawlUser(id, function () {
             crawl(ids, callback);
         });
     }).run();
 }
 
 /**
- * Get User data from LinkedIn
+ * Get User data from LinkedIn (i.e. crawl this user).
  * @param id {string}
  * @param callback {Function}
  */
-function getUser(id, callback) {
+function crawlUser(id, callback) {
     browser.get("http://www.linkedin.com/profile/view?id=" + id, function() {
         browser.executeAsync(async_getUserResult, function (err, result) {
             Fiber(function () {
@@ -328,10 +296,17 @@ function removeNullOrEmptyEntries(arr) {
 Meteor.methods({
     crawl: function (value, email, password, terms, locations) {
         this.unblock();
+
+        // TODO refactor to work with multiple viewers. Will need multiple browsers.
+        // Rename email to emails and password to passwords.
+
+        console.log("Email: " + email);
+        console.log("Password: " + password);
+        console.log("Terms: " + terms);
+        console.log("Locations: " + locations);
+
         crawling = value;
-
         items = [];
-
         terms = (terms || "").split(',');
         locations = locations.split(',');
 
@@ -345,7 +320,6 @@ Meteor.methods({
         });
 
         console.log(items);
-
         if (crawling) {
             go(email, password, function() {
                 crawling = false;
