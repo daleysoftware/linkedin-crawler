@@ -46,44 +46,44 @@
                 <div style="width: 25%; float:left">
                     <div class="form-group">
                         <label for="email-viewer-1">Email Address</label>
-                        <input disabled type="email" class="form-control" id="email-viewer-1" placeholder="Email address">
+                        <input type="email" class="form-control" id="email-viewer-1" placeholder="Email address">
                     </div>
                     <div class="form-group">
                         <label for="password-viewer-1">Password</label>
-                        <input disabled type="password" class="form-control" id="password-viewer-1" placeholder="Password">
+                        <input type="password" class="form-control" id="password-viewer-1" placeholder="Password">
                     </div>
                 </div>
                 <!-- Viewer 2 -->
                 <div style="width: 25%; float:left">
                     <div class="form-group">
                         <label for="email-viewer-2">Email Address</label>
-                        <input disabled type="email" class="form-control" id="email-viewer-2" placeholder="Email address">
+                        <input type="email" class="form-control" id="email-viewer-2" placeholder="Email address">
                     </div>
                     <div class="form-group">
                         <label for="password-viewer-2">Password</label>
-                        <input disabled type="password" class="form-control" id="password-viewer-2" placeholder="Password">
+                        <input type="password" class="form-control" id="password-viewer-2" placeholder="Password">
                     </div>
                 </div>
                 <!-- Viewer 3 -->
                 <div style="width: 25%; float:left">
                     <div class="form-group">
                         <label for="email-viewer-3">Email Address</label>
-                        <input disabled type="email" class="form-control" id="email-viewer-3" placeholder="Email address">
+                        <input type="email" class="form-control" id="email-viewer-3" placeholder="Email address">
                     </div>
                     <div class="form-group">
                         <label for="password-viewer-3">Password</label>
-                        <input disabled type="password" class="form-control" id="password-viewer-3" placeholder="Password">
+                        <input type="password" class="form-control" id="password-viewer-3" placeholder="Password">
                     </div>
                 </div>
                 <!-- Viewer 4 -->
                 <div style="width: 25%; float:left">
                     <div class="form-group">
                         <label for="email-viewer-4">Email Address</label>
-                        <input disabled type="email" class="form-control" id="email-viewer-4" placeholder="Email address">
+                        <input type="email" class="form-control" id="email-viewer-4" placeholder="Email address">
                     </div>
                     <div class="form-group">
                         <label for="password-viewer-4">Password</label>
-                        <input disabled type="password" class="form-control" id="password-viewer-4" placeholder="Password">
+                        <input type="password" class="form-control" id="password-viewer-4" placeholder="Password">
                     </div>
                 </div>
                 <br style="clear:both;"/>
@@ -122,11 +122,11 @@
     <div id="users">
     <ul>
         {{#each users}}
-            <li><a href="http://www.linkedin.com/profile/view?id={{id}}" target="_blank">{{name}}</a>
-                {{#if locality}}
-                    ({{locality}})
-                {{/if}}
-            </li>
+        <li><a href="http://www.linkedin.com/profile/view?id={{id}}" target="_blank">{{name}}</a>
+            {{#if locality}}
+                ({{locality}})
+            {{/if}}
+        </li>
         {{/each}}
     </ul>
     </div>

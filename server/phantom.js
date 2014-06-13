@@ -14,7 +14,8 @@ var settings = {
 var wd = Meteor.require('wd');
 var Fiber = Npm.require('fibers');
 var Asserter = wd.Asserter;
-var browser = wd.remote('localhost', 9134);
+var searcherBrowser = wd.remote('localhost', 9134);
+var viewerBrowsers = [];
 var fs = Npm.require('fs');
 var crawling = false;
 var items = [];
@@ -26,7 +27,6 @@ var status = "";
 
 /**
  * Always true asserter
- * @type {Asserter}
  */
 var asserter = new Asserter(
     function(target, cb) {
@@ -36,9 +36,8 @@ var asserter = new Asserter(
 
 /**
  * Get a new session on LinkedIn
- * @param callback
  */
-function newSession(callback) {
+function newSession(browser, callback) {
     browser.get("http://www.linkedin.com/", function() {
         browser.deleteAllCookies(function () {
             browser.refresh(function() {
@@ -50,11 +49,8 @@ function newSession(callback) {
 
 /**
  * Fill in an input
- * @param selector {String}
- * @param terms {String}
- * @param callback {Function}
  */
-function input(selector, terms, callback) {
+function input(browser, selector, terms, callback) {
     browser.elementByCssSelector(selector, function (err, el) {
         browser.type(el, terms, callback);
     });
@@ -62,10 +58,8 @@ function input(selector, terms, callback) {
 
 /**
  * Submit a form
- * @param selector {String}
- * @param callback {Function}
  */
-function submit(selector, callback) {
+function submit(browser, selector, callback) {
     browser.elementByCssSelector(selector, function (err, el) {
         el.submit(callback);
     });
@@ -73,10 +67,8 @@ function submit(selector, callback) {
 
 /**
  * Wait for an element
- * @param selector {String}
- * @param callback {Function}
  */
-function waitFor(selector, callback) {
+function waitFor(browser, selector, callback) {
     browser.waitForElementByCssSelector(selector, asserter, 10000, 200, function (err, satis, el) {
         callback(err);
     });
@@ -84,7 +76,6 @@ function waitFor(selector, callback) {
 
 /**
  * Notice some message
- * @param msg {string}
  */
 function notice(msg) {
     status = msg;
@@ -97,7 +88,6 @@ function notice(msg) {
 
 /**
  * Extract search results from webpage
- * @returns {{ids: Array, next: boolean}}
  */
 function getSearchResults() {
     var result = {ids: [], next: false},
@@ -113,7 +103,6 @@ function getSearchResults() {
 
 /**
  * Get a User profile
- * @param callback
  */
 function async_getUserResult(callback) {
     var result = {},
@@ -134,20 +123,25 @@ function async_getUserResult(callback) {
 
 /**
  * Signin to LinkedIn and perform crawl.
- * @param email {String}
- * @param password {String}
- * @param callback {Function}
  */
-function go(email, password, callback) {
+function go(emails, passwords, callback) {
     notice("Connecting...");
 
-    browser.init(settings, function() {
-        newSession(function () {
-            input("#session_key-login", email, function () {
-                input("#session_password-login", password, function () {
-                    submit("#login", function () {
-                        waitFor(".nav-item.account-settings-tab", function(err) {
-                            search(err, callback);
+    // TODO populate viewer browsers. Fail on can't login.
+
+    searcherBrowser.init(settings, function() {
+        newSession(searcherBrowser, function () {
+            input(searcherBrowser, "#session_key-login", emails[0], function () {
+                input(searcherBrowser, "#session_password-login", passwords[0], function () {
+                    submit(searcherBrowser, "#login", function () {
+                        waitFor(searcherBrowser, ".nav-item.account-settings-tab", function(err) {
+                            if (err) {
+                                notice("Login failed. Search cancelled.");
+                                callback();
+                                return;
+                            } else {
+                                search(searcherBrowser, viewerBrowsers, 0, callback);
+                            }
                         });
                     });
                 });
@@ -159,33 +153,21 @@ function go(email, password, callback) {
 /**
  * Submit a new search.
  */
-function search(err, callback) {
-    if (err) {
-        notice("Login failed. Search cancelled.");
-        callback();
-        return;
-    }
-
-    searchForTerms(0);
-}
-
-/**
- * Submit a search for a specific set of terms, given the index to our global items term list.
- */
-function searchForTerms(index) {
+function search(searcherBrowser, viewerBrowsers, index, callback) {
     if (index >= items.length) {
         notice("Crawl completed.");
+        callback();
         return;
     }
 
     item = items[index];
     notice("Searching for \"" + item.join(" ") + "\"...");
 
-    browser.get("http://linkedin.com/vsearch/p?keywords=" + item.join("+"), function() {
-        waitFor("#results.search-results", function () {
-            getAllSearchResults(function (ids) {
-                crawl(ids, function () {
-                    searchForTerms(index+1);
+    searcherBrowser.get("http://linkedin.com/vsearch/p?keywords=" + item.join("+"), function() {
+        waitFor(searcherBrowser, "#results.search-results", function () {
+            getAllSearchResults(searcherBrowser, function (ids) {
+                crawl(searcherBrowser, viewerBrowsers, ids, function () {
+                    search(seracherBrowser, viewerBrowsers, index+1, callback);
                 });
             });
         });
@@ -194,10 +176,8 @@ function searchForTerms(index) {
 
 /**
  * Perform seach and save all results in the database.
- * @param callback {Function}
- * @param _result {Array} optional, only used in recursive call
  */
-function getAllSearchResults(callback, _result) {
+function getAllSearchResults(browser, callback, _result) {
     _result = _result || [];
 
     if (!crawling) {
@@ -212,7 +192,7 @@ function getAllSearchResults(callback, _result) {
         if (result && result.next) {
             notice("Getting search results for page " + result.next.split("page_num=")[1] + "...");
             browser.get("http://www.linkedin.com" + result.next, function() {
-                getAllSearchResults(callback, _result);
+                getAllSearchResults(browser, callback, _result);
             });
         } else {
             notice("Search ends with " + _result.length + " result(s).");
@@ -223,10 +203,8 @@ function getAllSearchResults(callback, _result) {
 
 /**
  * Crawl the users
- * @param ids {Array}
- * @param callback {Function}
  */
-function crawl(ids, callback) {
+function crawl(searcherBrowser, viewerBrowsers, ids, callback) {
     Fiber(function () {
         var id;
         var found = false;
@@ -252,19 +230,19 @@ function crawl(ids, callback) {
             return;
         }
 
+        // TODO crawl all browsers. Async?
+
         // Crawl this user.
-        crawlUser(id, function () {
-            crawl(ids, callback);
+        crawlUser(searcherBrowser, id, function () {
+            crawl(searcherBrowser, viewerBrowsers, ids, callback);
         });
     }).run();
 }
 
 /**
  * Get User data from LinkedIn (i.e. crawl this user).
- * @param id {string}
- * @param callback {Function}
  */
-function crawlUser(id, callback) {
+function crawlUser(browser, id, callback) {
     browser.get("http://www.linkedin.com/profile/view?id=" + id, function() {
         browser.executeAsync(async_getUserResult, function (err, result) {
             Fiber(function () {
@@ -294,14 +272,11 @@ function removeNullOrEmptyEntries(arr) {
 }
 
 Meteor.methods({
-    crawl: function (value, email, password, terms, locations) {
+    crawl: function (value, emails, passwords, terms, locations) {
         this.unblock();
 
-        // TODO refactor to work with multiple viewers. Will need multiple browsers.
-        // Rename email to emails and password to passwords.
-
-        console.log("Email: " + email);
-        console.log("Password: " + password);
+        console.log("Emails: " + emails);
+        console.log("Passwords: " + passwords);
         console.log("Terms: " + terms);
         console.log("Locations: " + locations);
 
@@ -321,7 +296,7 @@ Meteor.methods({
 
         console.log(items);
         if (crawling) {
-            go(email, password, function() {
+            go(emails, passwords, function() {
                 crawling = false;
             });
         }
