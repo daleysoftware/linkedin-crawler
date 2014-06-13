@@ -13,7 +13,7 @@ To start using this application, you will need to install the following:
 * `npm`
 * `meteor-npm`
 
-After installation of these packages, you can execute `make -j 2` to run the application and `make clean` to delete all database files for fresh runs.
+After installation of these packages, you can execute `./run.sh` to run the application and `./clean.sh` to delete all database files for fresh runs.
 
 Interface
 ---
@@ -23,6 +23,6 @@ Interface
 Future Work
 ---
 
-* Allow for more flexibile specification of the number of viewers.
 * Allow for multiple searchers.
+* Pull down more information from the profile (title, company, etc.).
 * Misc improvements to the usability of the web interface (specifically the "status" area needs work).

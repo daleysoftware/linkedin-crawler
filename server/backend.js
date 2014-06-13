@@ -124,25 +124,68 @@ function async_getUserResult(callback) {
 /**
  * Signin to LinkedIn and perform crawl.
  */
-function go(emails, passwords, callback) {
-    notice("Connecting...");
+function go(searcherBrowser, viewerBrowsers, emails, passwords, callback) {
+    initViewerBrowsers(viewerBrowsers, emails, passwords, 0,
+        function() {
+            // Success callback.
+            searcherBrowser.init(settings, function() {
+                login(searcherBrowser, emails[0], passwords[0],
+                    function() {
+                        search(searcherBrowser, viewerBrowsers, 0, callback);
+                },
+                    function() {
+                        return;
+                });
+            });
+        }, function () {
+            // Failure callback.
+            callback();
+        });
+}
 
-    // TODO populate viewer browsers. Fail on can't login.
+function initViewerBrowsers(viewerBrowsers, emails, passwords, index, callback_success, callback_failure) {
+    if (index+1 == emails.length) {
+        callback_success();
+        return;
+    }
 
-    searcherBrowser.init(settings, function() {
-        newSession(searcherBrowser, function () {
-            input(searcherBrowser, "#session_key-login", emails[0], function () {
-                input(searcherBrowser, "#session_password-login", passwords[0], function () {
-                    submit(searcherBrowser, "#login", function () {
-                        waitFor(searcherBrowser, ".nav-item.account-settings-tab", function(err) {
-                            if (err) {
-                                notice("Login failed. Search cancelled.");
-                                callback();
-                                return;
-                            } else {
-                                search(searcherBrowser, viewerBrowsers, 0, callback);
-                            }
-                        });
+    email = emails[index+1];
+    password = passwords[index+1];
+
+    if (email.length == 0 || password.length == 0) {
+        return;
+    }
+
+    b = wd.remote('localhost', 9134 + index + 1);
+    b.init(settings, function() {
+        login(b, email, password,
+            function() {
+                viewerBrowsers.push(b);
+                initViewerBrowsers(viewerBrowsers, emails, passwords, index+1, callback_success, callback_failure);
+            },
+            function() {
+                notice("Can't login; bad credential for " + email);
+                callback_failure();
+            });
+    });
+}
+
+/**
+ * Login using the given credentials.
+ */
+function login(browser, email, password, callback_success, callback_failure) {
+    notice("Logging in as " + email + "...");
+
+    newSession(browser, function () {
+        input(browser, "#session_key-login", email, function () {
+            input(browser, "#session_password-login", password, function () {
+                submit(browser, "#login", function () {
+                    waitFor(browser, ".nav-item.account-settings-tab", function(err) {
+                        if (err) {
+                            callback_failure();
+                        } else {
+                            callback_success();
+                        }
                     });
                 });
             });
@@ -165,9 +208,9 @@ function search(searcherBrowser, viewerBrowsers, index, callback) {
 
     searcherBrowser.get("http://linkedin.com/vsearch/p?keywords=" + item.join("+"), function() {
         waitFor(searcherBrowser, "#results.search-results", function () {
-            getAllSearchResults(searcherBrowser, function (ids) {
-                crawl(searcherBrowser, viewerBrowsers, ids, function () {
-                    search(seracherBrowser, viewerBrowsers, index+1, callback);
+            getAllSearchResults(searcherBrowser, "[" + item.join(" ") + "]", function (ids) {
+                crawl(searcherBrowser, viewerBrowsers, ids, ids.length, "[" + item.join(" ") + "]", function () {
+                    search(searcherBrowser, viewerBrowsers, index+1, callback);
                 });
             });
         });
@@ -177,7 +220,7 @@ function search(searcherBrowser, viewerBrowsers, index, callback) {
 /**
  * Perform seach and save all results in the database.
  */
-function getAllSearchResults(browser, callback, _result) {
+function getAllSearchResults(browser, logPrefix, callback, _result) {
     _result = _result || [];
 
     if (!crawling) {
@@ -190,12 +233,12 @@ function getAllSearchResults(browser, callback, _result) {
             _result.push.apply(_result, result.ids);
         }
         if (result && result.next) {
-            notice("Getting search results for page " + result.next.split("page_num=")[1] + "...");
+            notice(logPrefix + " getting search results for page " + result.next.split("page_num=")[1] + "...");
             browser.get("http://www.linkedin.com" + result.next, function() {
-                getAllSearchResults(browser, callback, _result);
+                getAllSearchResults(browser, logPrefix, callback, _result);
             });
         } else {
-            notice("Search ends with " + _result.length + " result(s).");
+            notice(logPrefix + " search ends with " + _result.length + " result(s).");
             callback(_result);
         }
     });
@@ -204,7 +247,7 @@ function getAllSearchResults(browser, callback, _result) {
 /**
  * Crawl the users
  */
-function crawl(searcherBrowser, viewerBrowsers, ids, callback) {
+function crawl(searcherBrowser, viewerBrowsers, ids, total, logPrefix, callback) {
     Fiber(function () {
         var id;
         var found = false;
@@ -212,12 +255,12 @@ function crawl(searcherBrowser, viewerBrowsers, ids, callback) {
         // Look for next id unknown.
         while (crawling && (id = ids.shift())) {
             if (!users.find({id: id}).count()) {
-                console.log("New user. ID:" + id);
+                console.log("New user: " + id);
                 found = true;
                 break;
+            } else {
+                console.log("Duplicate user: " + id);
             }
-
-            console.log("User already found. ID:" + id);
         }
 
         // If we've stopped crawling or we've finished with the list.
@@ -233,8 +276,8 @@ function crawl(searcherBrowser, viewerBrowsers, ids, callback) {
         // TODO crawl all browsers. Async?
 
         // Crawl this user.
-        crawlUser(searcherBrowser, id, function () {
-            crawl(searcherBrowser, viewerBrowsers, ids, callback);
+        crawlUser(searcherBrowser, id, total-ids.length+1, total, logPrefix, function () {
+            crawl(searcherBrowser, viewerBrowsers, ids, total, logPrefix, callback);
         });
     }).run();
 }
@@ -242,17 +285,15 @@ function crawl(searcherBrowser, viewerBrowsers, ids, callback) {
 /**
  * Get User data from LinkedIn (i.e. crawl this user).
  */
-function crawlUser(browser, id, callback) {
+function crawlUser(browser, id, index, total, logPrefix, callback) {
     browser.get("http://www.linkedin.com/profile/view?id=" + id, function() {
         browser.executeAsync(async_getUserResult, function (err, result) {
             Fiber(function () {
                 if (!err && result) {
-                    notice("Saving " + result.name + "...");
+                    notice(logPrefix + " [" + index + "/" + total + "] saving " + result.name + "...");
                     result.id = id;
                     result.date = (new Date).getTime();
                     users.insert(result);
-                } else {
-                    console.log("Failed to view profile. ID:" + id);
                 }
 
                 callback();
@@ -275,11 +316,6 @@ Meteor.methods({
     crawl: function (value, emails, passwords, terms, locations) {
         this.unblock();
 
-        console.log("Emails: " + emails);
-        console.log("Passwords: " + passwords);
-        console.log("Terms: " + terms);
-        console.log("Locations: " + locations);
-
         crawling = value;
         items = [];
         terms = (terms || "").split(',');
@@ -296,7 +332,7 @@ Meteor.methods({
 
         console.log(items);
         if (crawling) {
-            go(emails, passwords, function() {
+            go(searcherBrowser, viewerBrowsers, emails, passwords, function() {
                 crawling = false;
             });
         }
