@@ -125,6 +125,8 @@ function async_getUserResult(callback) {
  * Signin to LinkedIn and perform crawl.
  */
 function go(searcherBrowser, viewerBrowsers, emails, passwords, callback) {
+    viewerBrowsers = [];
+
     initViewerBrowsers(viewerBrowsers, emails, passwords, 0,
         function() {
             // Success callback.
@@ -273,31 +275,51 @@ function crawl(searcherBrowser, viewerBrowsers, ids, total, logPrefix, callback)
             return;
         }
 
-        // TODO crawl all browsers. Async?
-
         // Crawl this user.
-        crawlUser(searcherBrowser, id, total-ids.length+1, total, logPrefix, function () {
-            crawl(searcherBrowser, viewerBrowsers, ids, total, logPrefix, callback);
-        });
-    }).run();
-}
-
-/**
- * Get User data from LinkedIn (i.e. crawl this user).
- */
-function crawlUser(browser, id, index, total, logPrefix, callback) {
-    browser.get("http://www.linkedin.com/profile/view?id=" + id, function() {
-        browser.executeAsync(async_getUserResult, function (err, result) {
+        crawlUserWithBrowser(searcherBrowser, id, function (err, result) {
             Fiber(function () {
                 if (!err && result) {
-                    notice(logPrefix + " [" + index + "/" + total + "] saving " + result.name + "...");
+                    notice(logPrefix + " [" + (total-ids.length+1) + "/" + total + "] saving " + result.name + "...");
                     result.id = id;
                     result.date = (new Date).getTime();
                     users.insert(result);
                 }
 
-                callback();
+                crawlUserWithBrowsers(viewerBrowsers, id, function() {
+                    crawl(searcherBrowser, viewerBrowsers, ids, total, logPrefix, callback);
+                });
             }).run();
+        });
+    }).run();
+}
+
+/**
+ * Crawl this user's profile using the given browsers. Ignores errors.
+ */
+function crawlUserWithBrowsers(browsers, id, callback, _index) {
+    _index = _index || 0;
+
+    if (_index >= browsers.length) {
+        callback();
+        return;
+    }
+
+    b = browsers[_index];
+    console.log("View with browser index " + _index);
+
+    crawlUserWithBrowser(b, id, function(err, result) {
+        // Ignore errors.
+        crawlUserWithBrowsers(browsers, id, callback, _index+1);
+    });
+}
+
+/**
+ * Crawl this user's profile with the given browser.
+ */
+function crawlUserWithBrowser(browser, id, callback) {
+    browser.get("http://www.linkedin.com/profile/view?id=" + id, function() {
+        browser.executeAsync(async_getUserResult, function (err, result) {
+            callback(err, result);
         });
     });
 }
