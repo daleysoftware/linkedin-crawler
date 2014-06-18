@@ -23,6 +23,7 @@ Interface
 Future Work
 ---
 
+* Fix/workaround phantomjs local storage crash.
 * Allow for multiple searchers.
 * Pull down more information from the profile (title, company, etc.).
 * Misc improvements to the usability of the web interface (specifically the "status" area needs work).
