@@ -6,7 +6,8 @@ setup:
 	mkdir -p storage/searcher storage/viewer1 storage/viewer2 storage/viewer3 storage/viewer4
 	meteor-npm
 
-# FIXME: local storage path is ignore. See https://github.com/ariya/phantomjs/issues/11596
+# FIXME: local storage path is ignored. See https://github.com/ariya/phantomjs/issues/11596
+# Use docker or some other virtual machine to work around this.
 searcher:
 	phantomjs --webdriver=9134 --cookies-file=storage/searcher.cookie --local-storage-path=storage/searcher
 viewer1:
