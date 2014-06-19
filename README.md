@@ -8,9 +8,10 @@ Usage
 
 To start using this application, you will need to install the following:
 
-* `phantomjs`
-* `meteor`
 * `npm`
+* `xvdb`
+* `java`
+* `meteor`
 * `meteor-npm`
 
 After installation of these packages, you can execute `./run.sh` to run the application and `./clean.sh` to delete all database files for fresh runs.
@@ -23,8 +24,6 @@ Interface
 Future Work
 ---
 
-* Improve error handling for broken browsers.
-* Fix/workaround phantomjs local storage crash.
+* Improve error handling.
 * Allow for multiple searchers.
 * Pull down more information from the profile (title, company, etc.).
-* Misc improvements to the usability of the web interface (specifically the "status" area needs work).

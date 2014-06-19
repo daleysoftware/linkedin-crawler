@@ -3,8 +3,7 @@
 //-------------------------------------------------------------------------------------//
 
 var settings = {
-    browserName: 'chrome',
-    "phantomjs.page.settings.userAgent": 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.26 Safari/537.36'
+    browserName: 'firefox'
 };
 
 //-------------------------------------------------------------------------------------//
@@ -15,15 +14,12 @@ var wd = Meteor.require('wd');
 var fs = Npm.require('fs');
 var Fiber = Npm.require('fibers');
 var Asserter = wd.Asserter;
-var viewerBrowsers = [];
 var fs = Npm.require('fs');
 var crawling = false;
-var items = [];
+var terms = [];
 var status = "";
-
-// Populated downstairs.
-var viewerIPs;
-var searcherBrowser;
+var searcherBrowser = wd.remote('localhost', 9135);
+var viewerBrowsers = [];
 
 //-------------------------------------------------------------------------------------//
 // HELPERS
@@ -162,7 +158,7 @@ function initViewerBrowsers(viewerBrowsers, emails, passwords, index, callback_s
         return;
     }
 
-    b = wd.remote(viewerIPs[index+1], 9135);
+    b = wd.remote('localhost', 9136 + index);
     b.init(settings, function() {
         login(b, email, password,
             function() {
@@ -203,19 +199,19 @@ function login(browser, email, password, callback_success, callback_failure) {
  * Submit a new search.
  */
 function search(searcherBrowser, viewerBrowsers, index, callback) {
-    if (index >= items.length) {
+    if (index >= terms.length) {
         notice("Crawl completed.");
         callback();
         return;
     }
 
-    item = items[index];
-    notice("Searching for \"" + item.join(" ") + "\"...");
+    term = terms[index];
+    notice("Searching for \"" + term.join(" ") + "\"...");
 
-    searcherBrowser.get("http://linkedin.com/vsearch/p?keywords=" + item.join("+"), function() {
+    searcherBrowser.get("http://linkedin.com/vsearch/p?keywords=" + term.join("+"), function() {
         waitFor(searcherBrowser, "#results.search-results", function () {
-            getAllSearchResults(searcherBrowser, "[" + item.join(" ") + "]", function (ids) {
-                crawl(searcherBrowser, viewerBrowsers, ids, ids.length, "[" + item.join(" ") + "]", function () {
+            getAllSearchResults(searcherBrowser, "[" + term.join(" ") + "]", function (ids) {
+                crawl(searcherBrowser, viewerBrowsers, ids, ids.length, "[" + term.join(" ") + "]", function () {
                     search(searcherBrowser, viewerBrowsers, index+1, callback);
                 });
             });
@@ -240,7 +236,13 @@ function getAllSearchResults(browser, logPrefix, callback, _result) {
         }
         if (result && result.next) {
             notice(logPrefix + " getting search results for page " + result.next.split("page_num=")[1] + "...");
-            browser.get("http://www.linkedin.com" + result.next, function() {
+            var next;
+            if (result.next.indexOf("linkedin.com") == -1) {
+                next = "http://www.linkedin.com" + result.next;
+            } else {
+                next = result.next;
+            }
+            browser.get(next, function() {
                 getAllSearchResults(browser, logPrefix, callback, _result);
             });
         } else {
@@ -339,36 +341,26 @@ function removeNullOrEmptyEntries(arr) {
 }
 
 Meteor.methods({
-    crawl: function (value, emails, passwords, terms, locations) {
+    crawl: function (value, emails, passwords, keywords, locations) {
         this.unblock();
 
         crawling = value;
-        items = [];
-        terms = (terms || "").split(',');
-        locations = locations.split(',');
+        terms = [];
+        locations = (locations || "").split(',');
 
-        terms.forEach(function(term) {
+        (keywords || "").split(',').forEach(function(term) {
             term = term.split(" ");
-
             locations.forEach(function(loc) {
                 loc = loc.split(" ");
-                items.push(removeNullOrEmptyEntries(term.concat(loc)));
+                terms.push(removeNullOrEmptyEntries(term.concat(loc)));
             });
         });
 
-        console.log(items);
         if (crawling) {
-            // FIXME remove docker IP reference once phantomjs bug if fixed.
-            fs.readFile('../../../../../.docker-ips', function read(err, data) {
-                if (err) {
-                    throw err;
-                }
-                viewerIPs = data.toString().split('\n');
-                searcherBrowser = wd.remote(viewerIPs[0], 9135);
-
-                go(searcherBrowser, viewerBrowsers, emails, passwords, function() {
-                    crawling = false;
-                });
+            notice("Starting crawl...");
+            console.log(terms);
+            go(searcherBrowser, viewerBrowsers, emails, passwords, function() {
+                crawling = false;
             });
         }
     },

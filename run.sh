@@ -1,2 +1,2 @@
 #!/bin/bash
-make --no-print-directory
+make --no-print-directory -j20

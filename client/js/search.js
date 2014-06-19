@@ -1,7 +1,7 @@
 var searching = false,
     emails = [],
     passwords = [],
-    terms = "",
+    keywords = "",
     locations = "",
     previous = "";
 
@@ -33,13 +33,13 @@ function update(event, self) {
 
     console.log(emails);
 
-    terms = $(self.find("#terms")).val();
+    keywords = $(self.find("#keywords")).val();
     locations = $(self.find("#locations")).val();
 
-    if (emails[0].length > 0 && passwords[0].length > 0 && terms.length) {
+    if (emails[0].length > 0 && passwords[0].length > 0 && keywords.length) {
         $button.removeAttr("disabled");
-        if (previous !== terms) {
-            previous = terms;
+        if (previous !== keywords) {
+            previous = keywords;
             searching = false;
         }
     } else {
@@ -56,7 +56,7 @@ function update(event, self) {
 function click(event) {
     searching = !searching;
     update.apply(this, arguments);
-    Meteor.call("crawl", searching, emails, passwords, terms, locations);
+    Meteor.call("crawl", searching, emails, passwords, keywords, locations);
 }
 
 /**
