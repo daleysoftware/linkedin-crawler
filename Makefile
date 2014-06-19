@@ -6,7 +6,7 @@ setup:
 	@meteor-npm
 
 # FIXME once https://github.com/ariya/phantomjs/issues/11596 is resolved, don't use docker.
-dockers: ips
+dockers:
 	@for i in $$(seq 1 5); do make docker; done
 	@make ips
 
