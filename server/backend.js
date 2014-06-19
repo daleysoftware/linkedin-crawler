@@ -21,17 +21,9 @@ var crawling = false;
 var items = [];
 var status = "";
 
+// Populated downstairs.
 var viewerIPs;
 var searcherBrowser;
-
-// FIXME remove docker IP reference once phantomjs bug if fixed.
-fs.readFile('../../../../../.docker-ips', function read(err, data) {
-    if (err) {
-        throw err;
-    }
-    viewerIPs = data.toString().split('\n');
-    searcherBrowser = wd.remote(viewerIPs[0], 9135);
-});
 
 //-------------------------------------------------------------------------------------//
 // HELPERS
@@ -366,8 +358,17 @@ Meteor.methods({
 
         console.log(items);
         if (crawling) {
-            go(searcherBrowser, viewerBrowsers, emails, passwords, function() {
-                crawling = false;
+            // FIXME remove docker IP reference once phantomjs bug if fixed.
+            fs.readFile('../../../../../.docker-ips', function read(err, data) {
+                if (err) {
+                    throw err;
+                }
+                viewerIPs = data.toString().split('\n');
+                searcherBrowser = wd.remote(viewerIPs[0], 9135);
+
+                go(searcherBrowser, viewerBrowsers, emails, passwords, function() {
+                    crawling = false;
+                });
             });
         }
     },

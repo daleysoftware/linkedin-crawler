@@ -6,13 +6,15 @@ setup:
 	@meteor-npm
 
 # FIXME once https://github.com/ariya/phantomjs/issues/11596 is resolved, don't use docker.
-dockers:
+dockers: ips
 	@for i in $$(seq 1 5); do make docker; done
+	@make ips
 
 docker:
 	@sudo docker run -d cmfatih/phantomjs /usr/bin/phantomjs --webdriver=9135 >> .docker-cids
-	@sudo docker inspect --format '{{ .NetworkSettings.IPAddress }}' $$(cat .docker-cids | tail -1) >> .docker-ips
-	@echo "Docker container IP $$(cat .docker-ips | tail -1)"
+
+ips:
+	@sudo echo $$(cat .docker-cids) | xargs docker inspect --format '{{ .NetworkSettings.IPAddress }}' > .docker-ips
 
 meteor:
 	@echo "Starting meteor..."
