@@ -23,6 +23,7 @@ Interface
 Future Work
 ---
 
+* Improve error handling for broken browsers.
 * Fix/workaround phantomjs local storage crash.
 * Allow for multiple searchers.
 * Pull down more information from the profile (title, company, etc.).
