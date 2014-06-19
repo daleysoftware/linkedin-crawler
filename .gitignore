@@ -1,2 +1,3 @@
 packages
-storage
+.docker-*
+*.swp

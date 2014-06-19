@@ -12,14 +12,26 @@ var settings = {
 //-------------------------------------------------------------------------------------//
 
 var wd = Meteor.require('wd');
+var fs = Npm.require('fs');
 var Fiber = Npm.require('fibers');
 var Asserter = wd.Asserter;
-var searcherBrowser = wd.remote('localhost', 9134);
 var viewerBrowsers = [];
 var fs = Npm.require('fs');
 var crawling = false;
 var items = [];
 var status = "";
+
+var viewerIPs;
+var searcherBrowser;
+
+// FIXME remove docker IP reference once phantomjs bug if fixed.
+fs.readFile('../../../../../.docker-ips', function read(err, data) {
+    if (err) {
+        throw err;
+    }
+    viewerIPs = data.toString().split('\n');
+    searcherBrowser = wd.remote(viewerIPs[0], 9135);
+});
 
 //-------------------------------------------------------------------------------------//
 // HELPERS
@@ -158,7 +170,7 @@ function initViewerBrowsers(viewerBrowsers, emails, passwords, index, callback_s
         return;
     }
 
-    b = wd.remote('localhost', 9134 + index + 1);
+    b = wd.remote(viewerIPs[index+1], 9135);
     b.init(settings, function() {
         login(b, email, password,
             function() {
