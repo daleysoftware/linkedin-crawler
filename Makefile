@@ -1,6 +1,4 @@
-.PHONY: run setup phantomjs meteor
-
-run: setup xvs wds meteor
+run: setup xvs wds static meteor
 
 setup:
 	@meteor-npm
@@ -29,9 +27,13 @@ xv4:
 xv5:
 	@Xvfb :5 -screen 0 1024x768x8
 
+static:
+	@mkdir -p /tmp/linkedin
+	@cd /tmp/linkedin && python -m SimpleHTTPServer 9000
+
 meteor:
 	@echo "Starting meteor..."
-	@meteor
+	@meteor --production
 
 clean:
 	@rm -rf .meteor/local

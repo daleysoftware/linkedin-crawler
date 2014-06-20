@@ -392,11 +392,13 @@ Meteor.methods({
             usersList.push(user.id + ',' + user.name + ',' + user.locality.replace(/,/g, ''));
         });
         data = usersList.join('\n');
-        // FIXME need better way to find pubic directory in meteor.
-        fs.writeFile("../../../../../public/leads.csv", data, function(err) {
-            if(err) {
-                console.log(err);
-            }
+
+        fs.mkdir('/tmp/linkedin/', 0755, function(err) {
+            fs.writeFile('/tmp/linkedin/leads.csv', data, function(err) {
+                if(err) {
+                    console.log(err);
+                }
+            });
         });
         return true;
     },

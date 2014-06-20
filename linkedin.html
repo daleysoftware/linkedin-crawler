@@ -1,5 +1,19 @@
 <head>
     <title>LinkedIn Crawler</title>
+    <script>
+        document.addEventListener('click', function(event) {
+            var target = event.target;
+            if (target.tagName.toLowerCase() == 'a')
+            {
+                var port = target.getAttribute('href').match(/^:(\d+)(.*)/);
+                if (port)
+                {
+                    target.href = port[2];
+                    target.port = port[1];
+                }
+            }
+        }, false);
+    </script>
 </head>
 
 <body>
@@ -117,5 +131,5 @@
 <template name="users">
     <h2>Crawled Profiles</h2>
     <p>Total crawled: {{count}}</p>
-    <p><a href="leads.csv">Download full CSV</a></p>
+    <p><a href=":9000/leads.csv">Download full CSV</a></p>
 </template>

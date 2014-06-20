@@ -31,8 +31,6 @@ function update(event, self) {
             $(self.find("#password-viewer-3")).val(),
             $(self.find("#password-viewer-4")).val()]));
 
-    console.log(emails);
-
     keywords = $(self.find("#keywords")).val();
     locations = $(self.find("#locations")).val();
 
