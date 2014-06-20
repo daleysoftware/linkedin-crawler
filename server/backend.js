@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------//
-// CONFIGURATION
+// Configuration
 //-------------------------------------------------------------------------------------//
 
 var settings = {
@@ -7,7 +7,7 @@ var settings = {
 };
 
 //-------------------------------------------------------------------------------------//
-// LIBRARIES AND VARIABLES
+// Libraries and variables
 //-------------------------------------------------------------------------------------//
 
 var wd = Meteor.require('wd');
@@ -22,7 +22,7 @@ var searcherBrowser = wd.remote('localhost', 9135);
 var viewerBrowsers = [];
 
 //-------------------------------------------------------------------------------------//
-// HELPERS
+// Helpers
 //-------------------------------------------------------------------------------------//
 
 /**
@@ -83,7 +83,7 @@ function notice(msg) {
 }
 
 //-------------------------------------------------------------------------------------//
-// FUNCTIONS INJECTED IN PHANTOM.JS WEBPAGE
+// Functions injected into webpage
 //-------------------------------------------------------------------------------------//
 
 /**
@@ -118,33 +118,41 @@ function async_getUserResult(callback) {
 }
 
 //-------------------------------------------------------------------------------------//
-// BUSINESS
+// Business
 //-------------------------------------------------------------------------------------//
 
 /**
  * Signin to LinkedIn and perform crawl.
  */
 function go(searcherBrowser, viewerBrowsers, emails, passwords, callback) {
-    viewerBrowsers = [];
+    search(searcherBrowser, viewerBrowsers, 0, callback);
+}
 
+/**
+ * Init and sign in to seacher and viewer browsers.
+ */
+function initBrowsers(searcherBrowser, viewerBrowsers, emails, passwords, callback_success, callback_failure) {
     initViewerBrowsers(viewerBrowsers, emails, passwords, 0,
         function() {
             // Success callback.
             searcherBrowser.init(settings, function() {
-                login(searcherBrowser, emails[0], passwords[0],
-                    function() {
-                        search(searcherBrowser, viewerBrowsers, 0, callback);
-                },
-                    function() {
-                        return;
+                login(searcherBrowser, emails[0], passwords[0], function() {
+                    // Success callback.
+                    callback_success();
+                }, function() {
+                    // Failure callback.
+                    callback_failure();
                 });
             });
         }, function () {
             // Failure callback.
-            callback();
+            callback_failure();
         });
 }
 
+/**
+ * Init and sign in to viewer browsers.
+ */
 function initViewerBrowsers(viewerBrowsers, emails, passwords, index, callback_success, callback_failure) {
     if (index+1 == emails.length) {
         callback_success();
@@ -158,7 +166,12 @@ function initViewerBrowsers(viewerBrowsers, emails, passwords, index, callback_s
         return;
     }
 
-    b = wd.remote('localhost', 9136 + index);
+    if (index < viewerBrowsers.length) {
+        b = viewerBrowsers[index];
+    } else {
+        b = wd.remote('localhost', 9136 + index);
+    }
+
     b.init(settings, function() {
         login(b, email, password,
             function() {
@@ -198,7 +211,7 @@ function login(browser, email, password, callback_success, callback_failure) {
 /**
  * Submit a new search.
  */
-function search(searcherBrowser, viewerBrowsers, index, callback) {
+function search(searcherBrowser, viewerBrowsers, emails, passwords, index, callback) {
     if (index >= terms.length) {
         notice("Crawl completed.");
         callback();
@@ -206,16 +219,22 @@ function search(searcherBrowser, viewerBrowsers, index, callback) {
     }
 
     term = terms[index];
-    notice("Searching for \"" + term.join(" ") + "\"...");
+    initBrowsers(searcherBrowser, viewerBrowsers, emails, passwords, function() {
+        // Success callback.
+        notice("Searching for \"" + term.join(" ") + "\"...");
 
-    searcherBrowser.get("http://linkedin.com/vsearch/p?keywords=" + term.join("+"), function() {
-        waitFor(searcherBrowser, "#results.search-results", function () {
-            getAllSearchResults(searcherBrowser, "[" + term.join(" ") + "]", function (ids) {
-                crawl(searcherBrowser, viewerBrowsers, ids, ids.length, "[" + term.join(" ") + "]", function () {
-                    search(searcherBrowser, viewerBrowsers, index+1, callback);
+        searcherBrowser.get("http://linkedin.com/vsearch/p?keywords=" + term.join("+"), function() {
+            waitFor(searcherBrowser, "#results.search-results", function () {
+                getAllSearchResults(searcherBrowser, "[" + term.join(" ") + "]", function (ids) {
+                    crawl(searcherBrowser, viewerBrowsers, ids, ids.length, "[" + term.join(" ") + "]", function () {
+                        search(searcherBrowser, viewerBrowsers, emails, passwords, index+1, callback);
+                    });
                 });
             });
         });
+    }, function() {
+        // Failure callback.
+        callback();
     });
 }
 
@@ -331,7 +350,7 @@ function crawlUserWithBrowser(browser, id, callback) {
 }
 
 //-------------------------------------------------------------------------------------//
-// PUBLISH METHODS TO THE CLIENT
+// Client Methods
 //-------------------------------------------------------------------------------------//
 
 function removeNullOrEmptyEntries(arr) {

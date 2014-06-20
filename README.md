@@ -9,7 +9,7 @@ Usage
 To start using this application, you will need to install the following:
 
 * `npm`
-* `xvdb`
+* `xvfb`
 * `java`
 * `meteor`
 * `meteor-npm`
