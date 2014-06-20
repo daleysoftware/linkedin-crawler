@@ -11,7 +11,6 @@ var settings = {
 //-------------------------------------------------------------------------------------//
 
 var wd = Meteor.require('wd');
-var fs = Npm.require('fs');
 var Fiber = Npm.require('fibers');
 var Asserter = wd.Asserter;
 var fs = Npm.require('fs');
@@ -385,6 +384,20 @@ Meteor.methods({
     },
     status: function () {
         return status;
+    },
+    csv: function () {
+        var usersList = [];
+        users.find().forEach(function(user) {
+            usersList.push(user.id + ',' + user.name + ',' + user.locality.replace(/,/g, ''));
+        });
+        data = usersList.join('\n');
+        // FIXME need better way to find pubic directory in meteor.
+        fs.writeFile("../../../../../public/leads.csv", data, function(err) {
+            if(err) {
+                console.log(err);
+            }
+        });
+        return true;
     },
     crawling: function() {
         return crawling;

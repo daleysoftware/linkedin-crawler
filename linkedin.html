@@ -117,17 +117,5 @@
 <template name="users">
     <h2>Crawled Profiles</h2>
     <p>Total crawled: {{count}}</p>
-    <p><a href="data:application/csv;charset=UTF-8,{{csv}}" download="linkedin.csv">Download full CSV</a></p>
-
-    <div id="users">
-    <ul>
-        {{#each users}}
-        <li><a href="http://www.linkedin.com/profile/view?id={{id}}" target="_blank">{{name}}</a>
-            {{#if locality}}
-                ({{locality}})
-            {{/if}}
-        </li>
-        {{/each}}
-    </ul>
-    </div>
+    <p><a href="leads.csv">Download full CSV</a></p>
 </template>

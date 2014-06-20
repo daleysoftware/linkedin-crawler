@@ -20,3 +20,9 @@ setInterval(function () {
         }
     });
 }, 350);
+
+setInterval(function () {
+    Meteor.call("csv", function (err, status) {
+        console.log("csv completed");
+    });
+}, 3000);
