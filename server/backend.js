@@ -124,7 +124,7 @@ function async_getUserResult(callback) {
  * Signin to LinkedIn and perform crawl.
  */
 function go(searcherBrowser, viewerBrowsers, emails, passwords, callback) {
-    search(searcherBrowser, viewerBrowsers, 0, callback);
+    search(searcherBrowser, viewerBrowsers, emails, passwords, 0, callback);
 }
 
 /**
@@ -165,16 +165,17 @@ function initViewerBrowsers(viewerBrowsers, emails, passwords, index, callback_s
         return;
     }
 
+    var b;
     if (index < viewerBrowsers.length) {
         b = viewerBrowsers[index];
     } else {
         b = wd.remote('localhost', 9136 + index);
+        viewerBrowsers.push(b);
     }
 
     b.init(settings, function() {
         login(b, email, password,
             function() {
-                viewerBrowsers.push(b);
                 initViewerBrowsers(viewerBrowsers, emails, passwords, index+1, callback_success, callback_failure);
             },
             function() {
