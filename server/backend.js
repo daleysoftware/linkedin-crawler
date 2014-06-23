@@ -11,14 +11,16 @@ var settings = {
 //-------------------------------------------------------------------------------------//
 
 var wd = Meteor.require('wd');
-var Fiber = Npm.require('fibers');
+var Fiber = Meteor.require('fibers');
 var Asserter = wd.Asserter;
-var fs = Npm.require('fs');
+var fs = Meteor.require('fs');
 var crawling = false;
 var terms = [];
 var status = "";
 var searcherBrowser = wd.remote('localhost', 9135);
 var viewerBrowsers = [];
+var RateLimiter = Meteor.require('limiter').RateLimiter;
+var limiter = new RateLimiter(1, 10000); // params are somewhat arbitrary; experiement.
 
 //-------------------------------------------------------------------------------------//
 // Helpers
@@ -34,10 +36,19 @@ var asserter = new Asserter(
 );
 
 /**
+ * Get a page
+ */
+function get(browser, page, callback) {
+    limiter.removeTokens(1, function() {
+        browser.get(page, callback);
+    });
+}
+
+/**
  * Get a new session on LinkedIn
  */
 function newSession(browser, callback) {
-    browser.get("http://www.linkedin.com/", function() {
+    get(browser, "http://www.linkedin.com/", function() {
         browser.deleteAllCookies(function () {
             browser.refresh(function() {
                 callback();
@@ -59,8 +70,10 @@ function input(browser, selector, terms, callback) {
  * Submit a form
  */
 function submit(browser, selector, callback) {
-    browser.elementByCssSelector(selector, function (err, el) {
-        el.submit(callback);
+    limiter.removeTokens(1, function() {
+        browser.elementByCssSelector(selector, function (err, el) {
+            el.submit(callback);
+        });
     });
 }
 
@@ -223,7 +236,7 @@ function search(searcherBrowser, viewerBrowsers, emails, passwords, index, callb
         // Success callback.
         notice("Searching for \"" + term.join(" ") + "\"...");
 
-        searcherBrowser.get("http://linkedin.com/vsearch/p?keywords=" + term.join("+"), function() {
+        get(searcherBrowser, "http://linkedin.com/vsearch/p?keywords=" + term.join("+"), function() {
             waitFor(searcherBrowser, "#results.search-results", function () {
                 getAllSearchResults(searcherBrowser, "[" + term.join(" ") + "]", function (ids) {
                     crawl(searcherBrowser, viewerBrowsers, ids, ids.length, "[" + term.join(" ") + "]", function () {
@@ -261,7 +274,7 @@ function getAllSearchResults(browser, logPrefix, callback, _result) {
             } else {
                 next = result.next;
             }
-            browser.get(next, function() {
+            get(browser, next, function() {
                 getAllSearchResults(browser, logPrefix, callback, _result);
             });
         } else {
@@ -342,7 +355,7 @@ function crawlUserWithBrowsers(browsers, id, callback, _index) {
  * Crawl this user's profile with the given browser.
  */
 function crawlUserWithBrowser(browser, id, callback) {
-    browser.get("http://www.linkedin.com/profile/view?id=" + id, function() {
+    get(browser, "http://www.linkedin.com/profile/view?id=" + id, function() {
         browser.executeAsync(async_getUserResult, function (err, result) {
             callback(err, result);
         });
