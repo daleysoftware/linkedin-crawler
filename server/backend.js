@@ -20,7 +20,7 @@ var status = "";
 var searcherBrowser = wd.remote('localhost', 9135);
 var viewerBrowsers = [];
 var RateLimiter = Meteor.require('limiter').RateLimiter;
-var limiter = new RateLimiter(1, 10000); // params are somewhat arbitrary; experiement.
+var limiter = new RateLimiter(1000, 10000); // params are somewhat arbitrary; experiement.
 
 //-------------------------------------------------------------------------------------//
 // Helpers
@@ -122,6 +122,7 @@ function async_getUserResult(callback) {
 
     if ($card.length) {
         result.name = $("span.full-name", $card).text();
+        result.headline = $("#headline .title", $card).text();
         result.locality = $("#location .locality", $card).text();
         callback(result);
     } else {
@@ -402,7 +403,15 @@ Meteor.methods({
     csv: function () {
         var usersList = [];
         users.find().forEach(function(user) {
-            usersList.push(user.id + ',' + user.name + ',' + user.locality.replace(/,/g, ''));
+            var id = user.id;
+            var name = user.name;
+            var locality = (user.locality == undefined || user.locality.length == 0) ?
+                           'N/A' : user.locality.replace(/,/g, '');
+            var headline = (user.headline == undefined || user.headline.length == 0) ?
+                           'N/A' : user.headline.replace(/,/g, '');
+
+            usersList.push(id + ',' + name + ',' + locality + ',' + headline);
+
         });
         data = usersList.join('\n');
 
