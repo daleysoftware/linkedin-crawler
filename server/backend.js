@@ -20,7 +20,7 @@ var status = "";
 var searcherBrowser = wd.remote('localhost', 9135);
 var viewerBrowsers = [];
 var RateLimiter = Meteor.require('limiter').RateLimiter;
-var limiter = new RateLimiter(1000, 10000); // params are somewhat arbitrary; experiement.
+var limiter = new RateLimiter(1, 10000); // params are somewhat arbitrary; experiement.
 
 //-------------------------------------------------------------------------------------//
 // Helpers
@@ -237,7 +237,7 @@ function search(searcherBrowser, viewerBrowsers, emails, passwords, index, callb
         // Success callback.
         notice("Searching for \"" + term.join(" ") + "\"...");
 
-        get(searcherBrowser, "http://linkedin.com/vsearch/p?keywords=" + term.join("+"), function() {
+        get(searcherBrowser, "http://linkedin.com/vsearch/p?" + term.join("+"), function() {
             waitFor(searcherBrowser, "#results.search-results", function () {
                 getAllSearchResults(searcherBrowser, "[" + term.join(" ") + "]", function (ids) {
                     crawl(searcherBrowser, viewerBrowsers, ids, ids.length, "[" + term.join(" ") + "]", function () {
