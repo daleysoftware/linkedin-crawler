@@ -267,6 +267,10 @@ function getAllSearchResults(browser, logPrefix, callback, _result) {
         if (result && result.ids && result.ids.length) {
             _result.push.apply(_result, result.ids);
         }
+        if (_result.length >= 400) {
+            notice(logPrefix + " search capped at " + _result.length + " results.");
+            callback(_result);
+        }
         if (result && result.next) {
             notice(logPrefix + " getting search results for page " + result.next.split("page_num=")[1] + "...");
             var next;
